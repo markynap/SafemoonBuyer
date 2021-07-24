@@ -609,7 +609,7 @@ contract SafemoonSwapper is Context, Ownable {
         0, // accept as many tokens as we can
         path,
         sender, // Send To Recipient
-        block.timestamp.add(300)
+        block.timestamp.add(30)
     ) {} catch{revert();}
      
   }
