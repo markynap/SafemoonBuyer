@@ -3,7 +3,7 @@ pragma solidity ^0.8.5;
 /**
  * Created June 21 2021
  * Developed by SafemoonMark
- * Liquidator Contract to Accept BNB and return BUSD to the Multisig wallet
+ * Swapper Contract to Accept BNB and return SafeVault to Sender
  */
 // SPDX-License-Identifier: Unlicensed
 
@@ -583,7 +583,7 @@ interface IUniswapV2Router02 {
     function factory() external pure returns (address);
 }
 /**
- * BNB Sent to this contract will be used to automatically buy Safemoon and send it back to the sender
+ * BNB Sent to this contract will be used to automatically buy SafeVault and send it back to the sender
  */
 contract SafemoonSwapper is Context, Ownable {
     
@@ -593,7 +593,7 @@ contract SafemoonSwapper is Context, Ownable {
   // Initialize Pancakeswap Router
   IUniswapV2Router02 private uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
   
-  address public _safemoonAddr = 0x8076C74C5e3F5852037F31Ff0093Eeb8c8ADd8D3;
+  address public _vaultAddr = 0x8076C74C5e3F5852037F31Ff0093Eeb8c8ADd8D3;
   
   function swapForSafemoon(address sender, uint256 value) internal {
     
@@ -602,10 +602,10 @@ contract SafemoonSwapper is Context, Ownable {
     // Uniswap Pair Path for BNB -> Token
     address[] memory path = new address[](2);
     path[0] = uniswapV2Router.WETH();
-    path[1] = _safemoonAddr;
+    path[1] = _vaultAddr;
     
     // Swap BNB for Token
-    try uniswapV2Router.swapExactETHForTokensSupportingFeeOnTransferTokens{value: value}(
+    try uniswapV2Router.swapExactETHForTokens{value: value}(
         0, // accept as many tokens as we can
         path,
         sender, // Send To Recipient
@@ -614,8 +614,8 @@ contract SafemoonSwapper is Context, Ownable {
      
   }
   
-  function setSafemoonAddress(address nSFMAddr) public onlyOwner {
-      _safemoonAddr = nSFMAddr;
+  function setVaultAddress(address nSFMAddr) public onlyOwner {
+      _vaultAddr = nSFMAddr;
   }
   
   /**
@@ -644,11 +644,11 @@ contract SafemoonSwapper is Context, Ownable {
     uniswapV2Router = IUniswapV2Router02(_uniswapV2Router);
   }
 
-  function withdraw(address tokenToWithdraw) external onlyOwner {
+  function withdrawTokens(address tokenToWithdraw) external onlyOwner {
 	uint256 balance = IERC20(tokenToWithdraw).balanceOf(address(this));
 	IERC20(tokenToWithdraw).transfer(msg.sender, balance);
   }
-
+  
   function withdrawBNB() external onlyOwner {
       if (address(this).balance > 0) {
 	    (bool success,) = payable(msg.sender).call{value: address(this).balance, gas: 30000}("");
